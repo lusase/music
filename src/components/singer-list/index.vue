@@ -60,6 +60,9 @@
       mLoading
     },
     methods: {
+      refresh() {
+        this.$refs.mScroll.refresh()
+      },
       selectItem(item) {
         this.$emit('select-item', item)
       },

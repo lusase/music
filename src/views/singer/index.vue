@@ -1,6 +1,6 @@
 <template>
-  <div class="singer">
-      <singer-list :list="singers" @select-item="selectSinger"></singer-list>
+  <div class="singer" ref="singer">
+      <singer-list :list="singers" @select-item="selectSinger" ref="singers"></singer-list>
       <router-view></router-view>
   </div>
 </template>
@@ -9,6 +9,10 @@
   import {ERR_OK} from 'api/config'
   import Singer from 'common/js/singer'
   import singerList from 'components/singer-list'
+  import {mapMutations} from 'vuex'
+  import * as types from 'store/mutation-types'
+  import {playListMixin} from 'common/js/mixin'
+
   const HOT_TITLE = '热门'
   const HOT_SIZE = 10
 
@@ -18,6 +22,7 @@
         singers: []
       }
     },
+    mixins: [playListMixin],
     created() {
       this._getSingerList()
     },
@@ -25,10 +30,16 @@
       singerList
     },
     methods: {
+      handlePlaylist(playList) {
+        const bottom = playList.length ? '60px' : ''
+        this.$refs.singer.style.bottom = bottom
+        this.$refs.singers.refresh()
+      },
       selectSinger(item) {
         this.$router.push({
           path: `/singer/${item.id}`
         })
+        this.setSinger(item)
       },
       _getSingerList() {
         getSingerList().then(res => {
@@ -72,7 +83,10 @@
         })
         ret.unshift(hot)
         return ret
-      }
+      },
+      ...mapMutations({
+        setSinger: types.SET_SINGER
+      })
     }
   }
 </script>

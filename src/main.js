@@ -11,7 +11,7 @@ import App from './App'
 import router from './router'
 import store from './store'
 
-
+import 'common/js/filter'
 
 
 fastclick.attach(document.body)
