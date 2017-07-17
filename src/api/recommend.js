@@ -32,3 +32,20 @@ export function getDiscList() {
     return Promise.resolve(res.data)
   })
 }
+
+export function getDiscSongList(disstid) {
+  const url = 'https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg'
+
+  const data = Object.assign({}, commonParams, {
+    disstid,
+    type: 1,
+    json: 1,
+    utf8: 1,
+    onlysong: 0,
+    platform: 'yqq',
+    hostUid: 0,
+    needNewCode: 0,
+    g_tk: 5381
+  })
+  return jsonp(url, data, Object.assign(params, {prefix: 'playlistinfoCallback'}))
+}

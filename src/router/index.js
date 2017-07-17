@@ -10,6 +10,8 @@ const recommend = _ => import('../views/recommend')
 const search = _ => import('../views/search')
 const singer = _ => import('../views/singer')
 const singerDetail = _ => import('../views/singer-detail')
+const disc = _ => import('../views/disc')
+const topList = _ => import('../views/top-list')
 
 export default new Router({
   routes: [
@@ -20,17 +22,30 @@ export default new Router({
     {
       path: '/rank',
       name: 'rank',
-      component: rank
+      component: rank,
+      children: [{
+        path: ':id',
+        component: topList
+      }]
     },
     {
       path: '/recommend',
       name: 'recommend',
-      component: recommend
+      component: recommend,
+      children: [{
+        path: ':id',
+        name: 'disc',
+        component: disc
+      }]
     },
     {
       path: '/search',
       name: 'search',
-      component: search
+      component: search,
+      children: [{
+        path: ':id',
+        component: singerDetail
+      }]
     },
     {
       path: '/singer',

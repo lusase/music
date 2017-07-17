@@ -148,6 +148,19 @@
     },
     created() {
       this.touch = {}
+      document.addEventListener('mousewheel', e => {
+        if (this.playList && this.playList.length && !this.fullScreen) {
+          if (e.wheelDelta > 0) {
+            if (this.$refs.audio.volume < 1) {
+              this.$refs.audio.volume += 0.02
+            }
+          } else {
+            if (this.$refs.audio.volume > 0) {
+              this.$refs.audio.volume -= 0.02
+            }
+          }
+        }
+      })
     },
     methods: {
       middleTouchStart(e) {

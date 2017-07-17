@@ -16,7 +16,7 @@
     <div class="bg-layer" ref="layer"></div>
     <m-scroll class="list" :list="songs" :listen-scroll="true" :probe-type="3" ref="songList" @pos-scroll="posScroll">
       <div class="song-list-wrapper">
-        <song-list :songs="songs" @select="selectItem"></song-list>
+        <song-list :songs="songs" @select="selectItem" :rank="rank"></song-list>
       </div>
       <div class="loading-container" v-show="!songs.length">
         <m-loading></m-loading>
@@ -55,6 +55,10 @@
       title: {
         type: String,
         default: ''
+      },
+      rank: {
+        type: Boolean,
+        default: false
       }
     },
     computed: {
