@@ -31,6 +31,10 @@
       beforeScroll: {
         type: Boolean,
         default: false
+      },
+      refreshDelay: {
+        type: Number,
+        default: 20
       }
     },
     mounted() {
@@ -81,9 +85,9 @@
     },
     watch: {
       list() {
-        requestAnimationFrame(_ => {
+        setTimeout(() => {
           this.refresh()
-        })
+        }, this.refreshDelay)
       }
     }
   }

@@ -4,7 +4,7 @@
       <search-box ref="searchBox" @query="onQueryChange"/>
     </div>
     <div class="shortcut-wrapper" v-show="!query" ref="shortcutWrapper">
-      <m-scroll class="shortcut" ref="shortcut" :list="shortcut">
+      <m-scroll :refreshDelay="100" class="shortcut" ref="shortcut" :list="shortcut">
         <div>
           <div class="hot-key">
             <h1 class="title">热门搜索</h1>
@@ -38,27 +38,22 @@
   </div>
 </template>
 <script>
-  import searchBox from 'components/search-box'
-  import mSuggest from 'components/m-suggest'
   import mConfirm from 'components/m-confirm'
   import mScroll from 'components/m-scroll'
   import searchList from 'components/search-list'
   import {getHotKey} from 'api/search'
   import {ERR_OK} from 'api/config'
-  import {mapActions, mapGetters} from 'vuex'
-  import {playListMixin} from 'common/js/mixin'
+  import {mapActions} from 'vuex'
+  import {playListMixin, searchMixin} from 'common/js/mixin'
 
   export default {
     data() {
       return {
-        hotKey: [],
-        query: ''
+        hotKey: []
       }
     },
-    mixins: [playListMixin],
+    mixins: [playListMixin, searchMixin],
     components: {
-      searchBox,
-      mSuggest,
       searchList,
       mConfirm,
       mScroll
@@ -66,10 +61,7 @@
     computed: {
       shortcut() {
         return this.hotKey.concat(this.searchHistory)
-      },
-      ...mapGetters([
-        'searchHistory'
-      ])
+      }
     },
     created() {
       this._getHotKey()
@@ -91,19 +83,6 @@
           }
         })
       },
-      addQuery(key) {
-        this.$refs.searchBox.setQuery(key)
-      },
-      onQueryChange(query) {
-        this.query = query
-      },
-      suggestScroll() {
-        this.$refs.searchBox.blur()
-      },
-      suggestSelect() {
-        this.$refs.searchBox.blur()
-        this.saveSearchHistory(this.query)
-      },
       handlePlaylist(playList) {
         const bottom = playList.length ? '60px' : ''
         this.$refs.shortcutWrapper.style.bottom = bottom
@@ -113,8 +92,6 @@
         this.$refs.mConfirm.show()
       },
       ...mapActions([
-        'saveSearchHistory',
-        'deleteSearchHistory',
         'clearSearchHistory'
       ])
     }

@@ -12,6 +12,7 @@ const singer = _ => import('../views/singer')
 const singerDetail = _ => import('../views/singer-detail')
 const disc = _ => import('../views/disc')
 const topList = _ => import('../views/top-list')
+const userCenter = _ => import('../views/user-center')
 
 export default new Router({
   routes: [
@@ -55,6 +56,11 @@ export default new Router({
         path: ':id',
         component: singerDetail
       }]
+    },
+    {
+      path: '/mine',
+      name: 'mine',
+      component: userCenter
     }
   ]
 })

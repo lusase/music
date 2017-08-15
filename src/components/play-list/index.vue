@@ -1,43 +1,138 @@
 <template>
-  <transitonn name="list-fade">
-    <div class="play-list">
+  <transition name="list-fade">
+    <div class="play-list" v-show="showFlag" @click.self="hide">
       <div class="list-wrapper">
         <div class="header">
           <h1 class="title">
-            <i class="icon"></i>
-            <span class="text"></span>
-            <span class="clear"><i class="icon-clear"></i></span>
+            <i class="icon" :class="iconMode" @click="changeMode"></i>
+            <span class="text">{{modeText}}</span>
+            <span class="clear" @click="showConfirm"><i class="icon-clear"></i></span>
           </h1>
         </div>
-        <div class="content">
-          <ul>
-            <li class="item">
-              <i class="current"></i>
-              <span class="text"></span>
-              <span class="like">
-                <i class="icon-not-favorite"></i>
+        <m-scroll :list="sequenceList" class="content" ref="listContent" :refreshDelay="100">
+          <transition-group name="list" tag="ul">
+            <li :key="song.id" ref="listItems" v-for="(song, index) in sequenceList" class="item" @click="selectItem(song, index)">
+              <i class="current" :class="getCurrentIcon(song)"></i>
+              <span class="text">{{song.name}}</span>
+              <span @click.stop="toggleFavorite(song)" class="like">
+                <i :class="getFavoriteIcon(song)"></i>
               </span>
-              <span class="delete">
+              <span class="delete" @click.stop="deleteSong(song)">
                 <i class="icon-delete"></i>
               </span>
             </li>
-          </ul>
-        </div>
+          </transition-group>
+        </m-scroll>
         <div class="operate">
-          <div class="add">
+          <div class="add" @click="showAddSong">
             <i class="icon-add"></i>
             <span class="text">添加歌曲到队列</span>
           </div>
         </div>
-        <div class="close">
+        <div class="close" @click="hide">
           <span>关闭</span>
         </div>
       </div>
+      <m-confirm
+        ref="mConfirm"
+        title="确定要清空播放列表吗?"
+        confirmText="清空"
+        @confirm="cleanPlayList"
+      ></m-confirm>
+      <add-song ref="addSong"></add-song>
     </div>
-  </transitonn>
+  </transition>
 </template>
 <script>
+  import {mapActions} from 'vuex'
+  import mScroll from 'components/m-scroll'
+  import mConfirm from 'components/m-confirm'
+  import addSong from 'components/add-song'
+  import {playMode} from 'common/js/config'
+  import {playerMixin} from 'common/js/mixin'
+  const modeTextMap = {
+    [playMode.random]: '随机播放',
+    [playMode.loop]: '循环播放',
+    [playMode.sequence]: '顺序播放'
+  }
 
+  export default {
+    data() {
+      return {
+        showFlag: false
+      }
+    },
+    mixins: [playerMixin],
+    computed: {
+      modeText() {
+        return modeTextMap[this.mode]
+      }
+    },
+    watch: {
+      currentSong(val) {
+        if (val.id) {
+          this.$nextTick(() => {
+            this.scrollToCurrent()
+          })
+        }
+      }
+    },
+    methods: {
+      show() {
+        this.showFlag = true
+        this.$nextTick(() => {
+          this.$refs.listContent.refresh()
+          this.scrollToCurrent()
+        })
+      },
+      hide() {
+        this.showFlag = false
+      },
+      showConfirm() {
+        this.$refs.mConfirm.show()
+      },
+      showAddSong() {
+        this.$refs.addSong.show()
+      },
+      cleanPlayList() {
+        this.deleteSongList()
+        this.hide()
+      },
+      getCurrentIcon(item) {
+        return this.currentSong.id === item.id ? 'icon-play' : ''
+      },
+      selectItem(item, index) {
+        if (this.mode === playMode.random) {
+          index = this.playList.findIndex(song => {
+            return song.id === item.id
+          })
+        }
+        this.setCurrentIndex(index)
+        this.setPlayingState(true)
+      },
+      scrollToCurrent() {
+        let index = this.sequenceList.findIndex(item => {
+          return item.id === this.currentSong.id
+        })
+        this.$refs.listContent.scrollToElement(this.$refs.listItems[index], 500)
+      },
+      deleteSong(song) {
+        this._deleteSong(song)
+        if (!this.playList.length) {
+          this.hide()
+        }
+      },
+      ...mapActions({
+        _deleteSong: 'deleteSong',
+        deleteSongList: 'deleteSongList'
+      })
+    },
+    components: {
+      mScroll,
+      mConfirm,
+      addSong
+    }
+  }
 </script>
 <style lang="stylus" scoped>
   @import "~common/stylus/variable"
@@ -58,7 +153,7 @@
     .list-wrapper
       position: absolute
       left: 0
-      top: 0
+      bottom: 0
       width: 100%
       background-color: $c-bg-h
       .header
@@ -87,6 +182,11 @@
           align-items: center
           height: 40px
           padding: 0 30px 0 20px
+          overflow: hidden
+          &.list-enter-active, &.list-leave-active
+            transition: all .1s linear
+          &.list-enter, &.list-leave-to
+            height: 0
           .current
             flex: 0 0 20px
             width: 20px
@@ -123,7 +223,7 @@
             font-size: $f-s
       .close
         text-align: center
-        line-height: 50
+        line-height: 50px
         background: $c-bg
         font-size: $f-xs
         color: $c-text-l

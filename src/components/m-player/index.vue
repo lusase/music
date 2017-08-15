@@ -66,7 +66,7 @@
               <i class="icon-next" @click="next"></i>
             </div>
             <div class="icon i-right">
-              <i class="icon icon-not-favorite"></i>
+              <i class="icon" @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
             </div>
           </div>
         </div>
@@ -87,25 +87,26 @@
                :class="{'icon-play-mini': !playing,'icon-pause-mini': playing}"></i>
           </progress-circle>
         </div>
-        <div class="control">
+        <div class="control" @click.stop="showPlayList">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
-    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
+    <play-list ref="playList"></play-list>
+    <audio ref="audio" :src="currentSong.url" @play="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
   </div>
 </template>
 <script>
-  import {mapGetters, mapMutations} from 'vuex'
+  import {mapGetters, mapActions} from 'vuex'
   import mScroll from 'components/m-scroll'
   import progressBar from 'components/progress-bar'
   import progressCircle from 'components/progress-circle'
+  import playList from 'components/play-list'
   import animations from 'create-keyframe-animation'
   import Lyric from 'lyric-parser'
+  import {playerMixin} from 'common/js/mixin'
   import {playMode} from 'common/js/config'
-  import * as types from 'store/mutation-types'
   import {prefixStyle} from 'common/js/dom'
-  import {shuffle} from 'common/js/util'
 
   const transform = prefixStyle('transform')
   const transitionDuration = prefixStyle('transitionDuration')
@@ -120,6 +121,7 @@
         playingLyric: ''
       }
     },
+    mixins: [playerMixin],
     computed: {
       disableCls() {
         return this.songReady ? '' : 'disable'
@@ -127,24 +129,17 @@
       percent() {
         return this.currentTime / this.currentSong.duration
       },
-      iconMode() {
-        return this.mode === playMode.sequence ? 'icon-sequence'
-          : this.mode === playMode.random ? 'icon-random' : 'icon-loop'
-      },
       ...mapGetters([
         'fullScreen',
-        'playList',
-        'currentSong',
         'playing',
-        'currentIndex',
-        'mode',
-        'sequenceList'
+        'currentIndex'
       ])
     },
     components: {
       mScroll,
       progressBar,
-      progressCircle
+      progressCircle,
+      playList
     },
     created() {
       this.touch = {}
@@ -163,6 +158,9 @@
       })
     },
     methods: {
+      showPlayList() {
+        this.$refs.playList.show()
+      },
       middleTouchStart(e) {
         this.touch.start = true
         this.touch.startX = e.touches[0].pageX
@@ -218,6 +216,7 @@
       },
       ready() {
         this.songReady = true
+        this.savePlayHistory(this.currentSong)
       },
       error() {
         this.songReady = true
@@ -226,6 +225,7 @@
         if (!this.songReady) return
         if (this.playList.length === 1) {
           this.loop()
+          return
         } else {
           let index = this.currentIndex - 1
           if (index === -1) index = this.playList.length - 1
@@ -238,6 +238,7 @@
         if (!this.songReady) return
         if (this.playList.length === 1) {
           this.loop()
+          return
         } else {
           let index = this.currentIndex + 1
           if (index === this.playList.length) index = 0
@@ -315,20 +316,9 @@
           this.currentLyric.seek(current * 1000)
         }
       },
-      changeMode() {
-        const mode = (this.mode + 1) % 3
-        this.setPlayMode(mode)
-        let list = null
-        if (mode === playMode.random) {
-          list = shuffle(this.sequenceList)
-        } else {
-          list = this.sequenceList
-        }
-        this.setCurrentIndex(list.indexOf(this.currentSong))
-        this.setPlayList(list)
-      },
       getLyric() {
         this.currentSong.getLyric().then(lyric => {
+          if (this.currentSong.lyric !== lyric) return
           this.currentLyric = new Lyric(lyric, this.handleLyric)
           if (this.playing) {
             this.currentLyric.play()
@@ -360,22 +350,19 @@
         const y = window.innerHeight - paddingTop - width / 2 - paddingBottom
         return {x, y, scale}
       },
-      ...mapMutations({
-        setFullScreen: types.SET_FULL_SCREEN,
-        setPlayingState: types.SET_PLAYING_STATE,
-        setCurrentIndex: types.SET_CURRENT_INDEX,
-        setPlayMode: types.SET_PLAY_MODE,
-        setPlayList: types.SET_PLAY_LIST
-      })
+      ...mapActions([
+        'savePlayHistory'
+      ])
     },
     watch: {
       currentSong(val, old) {
-        if (val.id === old.id) return
+        if (!val.id || val.id === old.id) return
         if (this.currentLyric) this.currentLyric.stop()
-        this.$nextTick(_ => {
+        if (this.timer) clearTimeout(this.timer)
+        this.timer = setTimeout(_ => {
           this.$refs.audio.play()
           this.getLyric()
-        })
+        }, 500)
       },
       playing(val) {
         const audio = this.$refs.audio
