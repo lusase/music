@@ -1,5 +1,8 @@
 # music
 
+> [线上访问地址](http://47.94.153.220/music/index.html)
+
+
 > A Vue.js project
 
 ## Build Setup
