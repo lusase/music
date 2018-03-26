@@ -32,6 +32,7 @@
       margin-right: 9px
       bg-image('logo')
       background-size: 30px 32px
+      border-radius: 50%
     .text
       display: inline-block
       vertical-align: top
