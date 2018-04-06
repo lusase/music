@@ -14,7 +14,7 @@
         <div class="list">
           <h1 class="title">热门歌单推荐</h1>
           <ul>
-            <li @click="selectItem(item)" class="item" v-for="item in discList">
+            <li @click="selectItem(item)" class="item" v-for="item in discList" :key="item.dissid">
               <div class="icon">
                 <img v-lazy="item.imgurl" width="60" height="60">
               </div>

@@ -15,6 +15,21 @@ const app = express()
 
 const apiRoutes = express.Router()
 
+apiRoutes.get('/getCdInfo', function(req,res) {
+  const url = 'https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg'
+  axios.get(url, {
+    headers: {
+      referer: 'https://c.y.qq.com/',
+      host: 'c.y.qq.com'
+    },
+    params: req.query
+  }).then(response => {
+    res.json(response.data)
+  }).catch(err => {
+    console.log(err);
+  })
+})
+
 apiRoutes.get('/getDiscList',function(req,res){
   const url = 'https://c.y.qq.com/splcloud/fcgi-bin/fcg_get_diss_by_tag.fcg'
   axios.get(url,{
@@ -59,4 +74,7 @@ app.listen(port, () => {
 })
 
 
-
+process.on('uncaughtException', function(err){
+    console.log('caught exception :' + err)
+    throw err
+})
